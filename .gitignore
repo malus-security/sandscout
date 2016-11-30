@@ -17,3 +17,6 @@ TAGS
 *.class
 *.jar
 *.pyc
+/parser.out
+/parsertab.py
+/parser.pyc
