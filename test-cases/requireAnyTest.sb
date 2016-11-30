@@ -1,0 +1,29 @@
+(version 1)
+(deny default)
+
+(allow file-read*
+        (subpath "/readpri")
+        (literal "/abc/ds")
+    
+        (require-all 
+	  (subpath "/mobile")
+	  (require-any 
+	    (extension "ally")
+	    (extension "guard")
+	    (require-all
+	      (literal "/myfile")
+	      (require-any 
+		(extension "flying")
+		(extension "trample")
+	      )
+	    )
+	  )
+	  (require-any 
+	    (extension "vigilance")
+	    (extension "hexproof")
+	  )
+
+	)
+
+)
+

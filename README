@@ -1,0 +1,25 @@
+This is a short explanation of each file you might find in this directory.
+
+test-cases/*.sb		: Files ending in .sb are sandbox profiles.
+			  The container profile I have been using for testing is from iOS 9.0.2.
+			  As of 5/14/16, I had to manually remove a line because of a bug in SandBlaster.
+			  This should get fixed soon.
+
+convertToProlog.sh	: This is our main shell script.
+			  It runs other scripts to convert SBPL to Prolog and output our query results.
+			  Usage: convertToProlog.sh <SBPL Profile> <outputFileForPLFacts> <PLRulesToUse> <outputFileForFactsAndRules>
+
+facts.pl		: This is a prolog database of all facts output by our SBPL to Prolog compiler, smartPly.py.
+rules.pl		: These prolog rules act sort of like functions which help us make queries.
+			  Our queries are defined in this file, but they are called by script.pl.
+factsAndRules.pl	: Concatenation of facts.pl and rules.pl which is used to process queries.
+script.pl		: This is a script which loads libraries and databases into prolog and calls our queries.
+
+smartPly.py		: This python script uses the ply library which provides lex and yacc for python.
+			  This is the script that tokenizes and parses SBPL.
+			  It also outputs the Prolog facts.
+
+
+You should be able to run the whole system by using the following example command
+
+./convertToProlog.sh containerManualPruning.sb facts.pl rules.pl factsAndRules.pl

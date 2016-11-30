@@ -1,0 +1,46 @@
+(version 1)
+(deny default)
+
+(allow file-read*
+        (subpath "/readpri")
+        (literal "/abc/ds")
+    
+      
+        (require-all (subpath "/private/var")
+	  (extension "librarian")
+	  (require-not (regex #"^/reggie1$" #"^/reggie2$") )
+	)
+
+        (require-all (subpath "/mobile")
+	  (require-any 
+	    (extension "ally")
+	    (extension "guard")))
+
+	(require-all (subpath "/Media")
+                          (require-entitlement "signing" (require-any (entitlement-value "safari")
+                                       (entitlement-value "webapp"))))
+
+
+)
+
+(allow file-write*
+        (subpath "/writepri")
+        (literal "/abc/ds")
+    
+	(regex #"^/Sys1$")
+	(regex #"^/Sys2$")
+      
+        (require-all (subpath "/private/var")
+	  (extension "librarian"))
+
+        (require-all (subpath "/mobile")
+	  (require-any 
+	    (extension "ally")
+	    (extension "guard")))
+
+
+	(require-all (subpath "/Media")
+                          (require-entitlement "signing" (require-any (entitlement-value "safari")
+                                       (entitlement-value "webapp"))))
+
+)
