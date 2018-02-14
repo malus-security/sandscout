@@ -1,3 +1,6 @@
+Please note that this repo represents the SandScout project as of 2016 when the SandScout paper was published.
+A more up to date and powerful version can be found in the iOracle repo.
+
 This is a short explanation of each file you might find in this directory.
 
 test-cases/*.sb		: Files ending in .sb are sandbox profiles.
