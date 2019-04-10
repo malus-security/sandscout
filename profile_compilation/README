@@ -1,0 +1,18 @@
+Instructions for using SandScout to compile SBPL into Prolog.
+
+Before running SandScout, you will need SBPL formatted sandbox profile files.
+These can be acquired using SandBlaster or here:
+https://github.com/malus-security/ios-sandbox-profiles
+
+sandscout_compiler.py 
+This script is designed to take a single profile in sbpl format and compile it into prolog facts.
+It relies on ply which is a python implementation of the compiler tools Lex and Yacc.
+The python code needs to be badly refactored, but it does have a few comments.
+  Usage: ./sandscout_compiler.py file_path_to_sbpl_profile.sb name_of_sandbox_profile > output_directory/name_of_profile.pl  
+
+processAllProfiles.sh
+This script takes a directory containing one of more sbpl files and runs sandscout_compiler.py on each sbpl file.
+The result is an output file for each input file, and a consolidated output file with all the facts needed by iOracle.
+sandscout_compiler.py should output error messages for each input file that it has trouble with.
+  Usage: ./processAllProfiles.sh directoryContainingSBPLProfiles directoryToOutputTo fileToConsolidateFactsInto
+  Example: ./processAllProfiles.sh SBPLProfiles/ prologFactsForProfiles/ ./allTheProfileFacts.pl
