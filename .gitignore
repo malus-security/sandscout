@@ -22,3 +22,5 @@ TAGS
 /parser.pyc
 /facts.pl
 /factsAndRules.pl
+/parsetab.py
+/outputFromQueries/
