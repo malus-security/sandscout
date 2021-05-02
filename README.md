@@ -22,11 +22,7 @@ This is a short explanation of each file you might find in this directory.
 
 `test-cases/*.sb`: Files ending in `.sb` are sandbox profiles. The container profile we have been using for testing is from iOS 9.0.2. As of 5/14/16, we had to manually remove a line because of a bug in SandBlaster. This should get fixed soon.
 
-`convertToProlog.sh`: This is our main shell script.  It runs other scripts to convert SBPL to Prolog and output our query results. Usage:
-
-```
-convertToProlog.sh <SBPL Profile> <outputFileForPLFacts> <PLRulesToUse> <outputFileForFactsAndRules>
-```
+`convertToProlog.sh`: This is our main shell script.  It runs other scripts to convert SBPL to Prolog and output our query results.
 
 `rules.pl`: These prolog rules act sort of like functions which help us make queries. Our queries are defined in this file, but they are called by `script.pl`.
 
@@ -36,8 +32,22 @@ convertToProlog.sh <SBPL Profile> <outputFileForPLFacts> <PLRulesToUse> <outputF
 
 ## Usage
 
-You should be able to run the whole system by using the following example command:
+You should be able to run the whole system by using the `convertToProlog.sh` script.
+Pass it a sandbox profile file in SBPL format.
+A sample run is shown below:
 
 ```
-./convertToProlog.sh containerManualPruning.sb facts.pl rules.pl factsAndRules.pl
+$ ./convertToProlog.sh test-cases/containerManualPruning.sb
+* Removing old output files in outputFromQueries ...
+* Generating Prolog facts in facts.pl ...
+* Merging Prolog facts (facts.pl) and Prolog rules (rules.pl) in factsAndRules.pl ...
+* Using script.pl to execute Prolog queries ...
+
+See output of Prolog queries in outputFromQueries/ folder.
+```
+
+Result files are in the `outputFromQeuries/` folder:
+```
+$ ls outputFromQueries/
+query1.out  query2.out  query3.out  query4.out
 ```
