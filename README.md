@@ -28,11 +28,7 @@ This is a short explanation of each file you might find in this directory.
 convertToProlog.sh <SBPL Profile> <outputFileForPLFacts> <PLRulesToUse> <outputFileForFactsAndRules>
 ```
 
-facts.pl: This is a prolog database of all facts output by our SBPL to Prolog compiler, `smartPly.py`.
-
 `rules.pl`: These prolog rules act sort of like functions which help us make queries. Our queries are defined in this file, but they are called by `script.pl`.
-
-`factsAndRules.pl`: Concatenation of `facts.pl` and `rules.pl` which is used to process queries.
 
 `script.pl`: This is a script which loads libraries and databases into Prolog and calls our queries.
 
