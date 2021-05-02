@@ -1,8 +1,10 @@
 # SandScout
 
-SandScout is a framework to extract, decompile, formally model, and analyze iOS sandbox profiles as logic-based programs. We use our Prolog-based queries to evaluate file-based security properties of the container sandbox profile for iOS 9.0.2 and discover seven classes of exploitable vulnerabilities.
+SandScout is a framework to extract, decompile, formally model, and analyze iOS sandbox profiles as logic-based programs.
+It uses Prolog-based queries to evaluate file-based security properties of iOS sandbox profiles.
 
 The [SandScout paper](https://dl.acm.org/doi/10.1145/2976749.2978336) (`SandScout: Automatic Detection of Flaws in iOS Sandbox Profiles`), presented at ACM CCS 2016, details the architecture and implementation of SandScout and our findings.
+In the paper SandScout was used to evaluate the `container` sandbox profile for iOS 9.0.2 and discover seven classes of exploitable vulnerabilities.
 
 SandScout is open source software released under the 3-clause BSD license.
 
@@ -14,21 +16,27 @@ Authors:
   * William Enck, North Carolina State University
   * Ahmad-Reza Sadeghi, Technische Universitat Darmstadt
 
-Please note that this repo represents the SandScout project as of 2016 when the SandScout paper was published. A more up to date and powerful version can be found in the iOracle repo.
+Please note that this repo represents the SandScout project as of 2016 when the SandScout paper was published.
+A more up to date and powerful version is in the `profile_compilation/` subfolder.
 
-## Project files
+## Project Files
 
-This is a short explanation of each file you might find in this directory.
+`convertToProlog.sh` is the main SandScout script.
+It runs the other scripts (`smartPly.py`, `script.pl`) to convert sandbox profiles to Prolog and output query results.
 
-`test-cases/*.sb`: Files ending in `.sb` are sandbox profiles. The container profile we have been using for testing is from iOS 9.0.2. As of 5/14/16, we had to manually remove a line because of a bug in SandBlaster. This should get fixed soon.
+`test-cases/*.sb` are sample sandbox profile files in SBPL (*Sandbox Profile Language*) format that can be used as test cases.
+SBPL is the original sandbox format that is compiled in binary format by Apple.
+[SandBlaster](https://github.com/malus-security/sandblaster) can be used to obtain sandbox profile files (in SBPL format).
 
-`convertToProlog.sh`: This is our main shell script.  It runs other scripts to convert SBPL to Prolog and output our query results.
+`smartPly.py` parses SBPL files to Prolog facts.
+Prolog facts form the facts database that is to be queried for invalidation of security properties.
+It uses the `ply` library that provides `lex` and `yacc` for Python.
 
-`rules.pl`: These prolog rules act sort of like functions which help us make queries. Our queries are defined in this file, but they are called by `script.pl`.
+`rules.pl` stores Prolog rules and queries.
+Rules are support functions used by queries.
+Queries are invoked by the `script.pl` script.
 
-`script.pl`: This is a script which loads libraries and databases into Prolog and calls our queries.
-
-`smartPly.py`: This Python script uses the `ply` library which provides `lex` and `yacc` for Python. This is the script that tokenizes and parses SBPL. It also outputs the Prolog facts.
+`script.pl` loads required Prolog libraries, facts and rules and invokes queries.
 
 ## Usage
 
