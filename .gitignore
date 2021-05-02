@@ -20,3 +20,7 @@ TAGS
 /parser.out
 /parsertab.py
 /parser.pyc
+/facts.pl
+/factsAndRules.pl
+/parsetab.py
+/outputFromQueries/
