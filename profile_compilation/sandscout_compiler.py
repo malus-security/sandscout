@@ -165,8 +165,12 @@ def p_rule_list(par):
     '''rule_list 	: rule rule_list
         | '''
     if len(par) == 3:
-        # I'm assuming this will be the sum of two lists.
-        par[0] = par[1] + par[2]
+        if par[1] is None and par[2] is not None:
+            par[0] = par[2]
+        elif par[1] is not None and par[2] is None:
+            par[0] = par[1]
+        else:
+            par[0] = par[1] + par[2]
     else:
         par[0] = []
 
@@ -176,11 +180,15 @@ def _add_to_graph(decision, operation, path):
     if decision == _DEFAULT_DEC:
         return
 
-    path = path.split(',')
-    if operation in _GRAPH:
-        _GRAPH[operation].append(path)
+    if path:
+        path = path.split(',')
+
+        if operation in _GRAPH:
+            _GRAPH[operation].append(path)
+        else:
+            _GRAPH[operation] = [path]
     else:
-        _GRAPH[operation] = [path]
+        _GRAPH[operation] = []
 
 
 def p_rule(par):
@@ -222,6 +230,8 @@ def p_rule(par):
             "profileRule(profile(\"" + _CMD_ARGS.output_file
             + "\"),decision(\"" + par[2] + "\"),operation(\"" + par[3]
             + "\"),filters([]))."]
+    elif len(par) == 5:
+        _add_to_graph(par[2], par[3], [])
 
 
 def p_action(par):
@@ -312,7 +322,10 @@ def p_require_all(par):
 
     if len(par) == 3:
         # Without an entValList, there are no elements to process
-        par[0] = ["require-entitlement(" + par[1] + ",[])"]
+        if _CMD_ARGS:
+            par[0] = ["require-entitlement(" + par[1] + ",[])"]
+        else:
+            par[0] = ["require-entitlement(" + par[1] + ")"]
 
     # Is it safe to have all require_alls return a list containing a list of
     # strings?
@@ -377,7 +390,8 @@ def p_filemode(par):
 
 def p_subpath(par):
     'subpath	: TK_SUBPATH TK_FILTER'
-    par[2] = par[2][:-1] + '/"'
+    if _CMD_ARGS:
+        par[2] = par[2][:-1] + '/"'
     par[0] = par[1] + "(" + par[2] + ")"
 
 
@@ -415,20 +429,23 @@ def p_other_type(par):
     'other_type : TK_OTHERTYPE'
     # Some filter types are capitalized, but this confuses Prolog, so we make
     # them lowercase.
-    par[1] = par[1].lower()
+    if _CMD_ARGS:
+        par[1] = par[1].lower()
     par[0] = par[1]
 
 
 def p_regex_filter(par):
     'regex_filter : TK_OTHERTYPE regex_list'
-    par[0] = []
-    for regex in par[2]:
-        if _CMD_ARGS:
+    if _CMD_ARGS:
+        par[0] = []
+        for regex in par[2]:
             regex = regex[1:]
             regex += "/i"
             regex = regex.replace("\\.", "[.]")
 
-        par[0].append(par[1] + "(" + regex + ")")
+            par[0].append(par[1] + "(" + regex + ")")
+    else:
+        par[0] = par[1] + "(" + " ".join(par[2]) + ")"
 
 
 def p_regex_list(par):
