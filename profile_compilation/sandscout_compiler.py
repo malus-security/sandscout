@@ -91,7 +91,7 @@ def t_TK_BOOL(tok):
 # Attempting to match file-mode number such as #o0004
 def t_TK_MODENUMBER(tok):
     r'\#o[0-9][0-9][0-9][0-9]'
-    tok.value = str(tok.value)
+    # tok.value = str(tok.value)
     return tok
 
 
@@ -175,18 +175,45 @@ def p_rule_list(par):
         par[0] = []
 
 
+def _rebuild_req_ent(paths):
+    l = len(paths)
+    i = 0
+    paths_to_remove = []
+
+    while i < l:
+        if "require-entitlement" in paths[i]:
+            j = i
+            values = []
+            i += 1
+
+            while i < l and "entitlement-value" in paths[i]:
+                values.append(paths[i])
+                paths_to_remove.append(i)
+                i += 1
+
+            if values:
+                paths[j] = paths[j][:-1] + ", " + ", ".join(values) + ")"
+        else:
+            i += 1
+
+    for p in paths_to_remove:
+        paths.pop(p)
+
+    return paths
+
+
 def _add_to_graph(decision, operation, path):
     'Add one path to a terminal node to one operation'
     if decision == _DEFAULT_DEC:
         return
 
     if path:
-        path = path.split(',')
+        paths = _rebuild_req_ent(path.split(','))
 
         if operation in _GRAPH:
-            _GRAPH[operation].append(path)
+            _GRAPH[operation].append(paths)
         else:
-            _GRAPH[operation] = [path]
+            _GRAPH[operation] = [paths]
     else:
         _GRAPH[operation] = []
 
@@ -354,12 +381,16 @@ def p_object(par):
         | TK_VNODETYPE other_type
         | other_type TK_LPAREN other_type TK_FILTER other_type TK_RPAREN
         | TK_DEBUGMODE'''
+        
     if len(par) == 2:
         par[0] = par[1]
     if len(par) == 3:
         par[0] = par[1] + "(" + par[2] + ")"
     if len(par) == 4:
-        par[0] = par[1] + "(" + par[2] + "(" + par[3] + "))"
+        if _CMD_ARGS:
+            par[0] = par[1] + "(" + par[2] + "(" + par[3] + "))"
+        else:
+            par[0] = par[1] + "(" + par[2] + " " + par[3] + ")"
     if len(par) == 5:
         if isinstance(par[3], str):
             par[0] = par[1] + par[2] + par[3] + par[4]
@@ -380,12 +411,18 @@ def p_object(par):
     if len(par) == 7:
         temp = '"' + par[3] + '"'
         par[3] = temp
-        par[0] = par[1] + "(" + par[3] + "," + par[4] + "," + par[5] + ")"
+        if _CMD_ARGS:
+            par[0] = par[1] + "((" + par[3] + "," + par[4] + "," + par[5] + "))"
+        else:
+            par[0] = par[1] + "((" + par[3][1:-1] + " " + par[4] + " " + par[5] + "))"
 
 
 def p_filemode(par):
     'filemode : TK_FILEMODETYPE TK_MODENUMBER'
-    par[0] = par[1] + "(\"" + par[2] + "\")"
+    if _CMD_ARGS:
+        par[0] = par[1] + "(\"" + par[2] + "\")"
+    else:
+        par[0] = par[1] + "(" + par[2] + ")"
 
 
 def p_subpath(par):
@@ -401,20 +438,23 @@ def p_prefix(par):
             | TK_RPREFIX TK_FILTER'''
 
     # If there is a variable in the prefix.
-    if "{" in par[2]:
-        # Do the ugly regex work here, and just rip out what I need from the
-        # filter. This is good enough.
-        pattern = re.compile(r'"\${([^}]*)}([^"]*)"')
-        matches = pattern.match(par[2])
-        par[0] = par[1] + "(variable(\"" + matches.group(1) + "\"),path(\""\
-            + matches.group(2) + "\"))"
-    # If there is not a variable in the prefix then we just treat the filter
-    # like a subpath.
-    # This might be too vague, but let's see what happens.
+    if _CMD_ARGS:
+        if "{" in par[2]:
+            # Do the ugly regex work here, and just rip out what I need from the
+            # filter. This is good enough.
+            pattern = re.compile(r'"\${([^}]*)}([^"]*)"')
+            matches = pattern.match(par[2])
+            par[0] = par[1] + "(variable(\"" + matches.group(1) + "\"),path(\""\
+                + matches.group(2) + "\"))"
+        # If there is not a variable in the prefix then we just treat the filter
+        # like a subpath.
+        # This might be too vague, but let's see what happens.
+        else:
+            # I am not appending a / since prefixes might state literals in the
+            # filter argument.
+            par[0] = "subpath(" + par[2] + ")"
     else:
-        # I am not appending a / since prefixes might state literals in the
-        # filter argument.
-        par[0] = "subpath(" + par[2] + ")"
+        par[0] = par[1] + "(" + par[2] + ")"
 
 
 # TODO: this is sort of a hack and I should evaluate it effects carefully.
