@@ -1,35 +1,43 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+'''
+Compiler for sandbox profiles
+Input: an SBPL file
+Output: either a graph or a Prolog representation of the input profile
+'''
+
+from argparse import ArgumentParser
+import re
+import sys
+
 import ply.lex as lex
 import ply.yacc as yacc
-import os
-import sys
-import fileinput
-import re
 
 
 ####################################################
-#begin tokenizer / lex
+# begin tokenizer / lex
 ####################################################
 
 reserved = {
-'subpath' : 'TK_SUBPATH',
-'literal-prefix' : 'TK_LPREFIX',
-'subpath-prefix' : 'TK_SPREFIX',
-'regex-prefix' : 'TK_RPREFIX',
-'allow' : 'TK_ALLOW',
-'deny' : 'TK_DENY',
-'version' : 'TK_VERSION',
-'default' : 'TK_DEFAULT',
-'require-all' : 'TK_REQALL',
-'require-any' : 'TK_REQANY',
-'require-not' : 'TK_REQNOT',
-'vnode-type' : 'TK_VNODETYPE',
-'file-mode' : 'TK_FILEMODETYPE',
-'debug-mode' : 'TK_DEBUGMODE',
-'require-entitlement' : 'TK_REQENT'}
+    'subpath': 'TK_SUBPATH',
+    'literal-prefix': 'TK_LPREFIX',
+    'subpath-prefix': 'TK_SPREFIX',
+    'regex-prefix': 'TK_RPREFIX',
+    'allow': 'TK_ALLOW',
+    'deny': 'TK_DENY',
+    'version': 'TK_VERSION',
+    'default': 'TK_DEFAULT',
+    'require-all': 'TK_REQALL',
+    'require-any': 'TK_REQANY',
+    'require-not': 'TK_REQNOT',
+    'vnode-type': 'TK_VNODETYPE',
+    'file-mode': 'TK_FILEMODETYPE',
+    'debug-mode': 'TK_DEBUGMODE',
+    'require-entitlement': 'TK_REQENT'
+}
 
-# List of token names.   This is always required
-tokens = [ 
+# List of token names. This is always required.
+tokens = [
     'TK_LPAREN',
     'TK_RPAREN',
     'TK_FILTER',
@@ -39,335 +47,497 @@ tokens = [
     'TK_MODENUMBER',
 ] + list(reserved.values())
 
+'Default decison. Used to igore other rules with the same decision'
+_DEFAULT_DEC = ''
+
+'The dependency graph created by the module'
+_GRAPH = {}
+
+'The command-line parameters'
+_CMD_ARGS = None
+
 # Regular expression rules for simple tokens
 t_TK_LPAREN = r'\('
 t_TK_RPAREN = r'\)'
 
-def t_TK_OTHERTYPE(t):
-  r'[^\"\n#\ \(\)][^\n\ \(\)]*'
-  if t.value in reserved:
-    t.type = reserved.get(t.value,'ID')
-  else:	
-    t.value = str(t.value)
-  return t
- 
-def t_TK_FILTER(t):
-  r'"[^"]*"'
-  t.value = str(t.value)
-  return t
 
-def t_TK_REGEXPRESSION(t):
-  r'\#"[^"]*"'
-  t.value = str(t.value)
-  return t
-
-def t_TK_BOOL(t):
-  r'\#[tf]'
-  t.value = str(t.value)
-  return t
-
-#attempting to match file-mode number such as #o0004
-def t_TK_MODENUMBER(t):
-  r'\#o[0-9][0-9][0-9][0-9]'
-  t.value = str(t.value)
-  return t
+def t_TK_OTHERTYPE(tok):
+    r'[^\"\n#\ \(\)][^\n\ \(\)]*'
+    if tok.value in reserved:
+        tok.type = reserved.get(tok.value, 'ID')
+    else:
+        tok.value = str(tok.value)
+    return tok
 
 
+def t_TK_FILTER(tok):
+    r'"[^"]*"'
+    tok.value = str(tok.value)
+    return tok
 
-#Taken from ply example in documentation
-#Tracks line numbers
-def t_newline(t):
-  r'\n+'
-  t.lexer.lineno += len(t.value)
 
-#Taken from ply example in documentation
-#Ignores spaces and tabs
+def t_TK_REGEXPRESSION(tok):
+    r'\#"[^"]*"'
+    tok.value = str(tok.value)
+    return tok
+
+
+def t_TK_BOOL(tok):
+    r'\#[tf]'
+    tok.value = str(tok.value)
+    return tok
+
+
+# Attempting to match file-mode number such as #o0004
+def t_TK_MODENUMBER(tok):
+    r'\#o[0-9][0-9][0-9][0-9]'
+    # tok.value = str(tok.value)
+    return tok
+
+
+# Taken from ply example in documentation
+# Tracks line numbers
+def t_newline(tok):
+    r'\n+'
+    tok.lexer.lineno += len(tok.value)
+
+
+# Taken from ply example in documentation
+# Ignores spaces and tabs
 t_ignore = ' \t'
 
-#Taken from ply example in documentation
-#Handle error
-def t_error(t):
-  sys.stderr.write('line '+str(lexer.lineno)+': illegal character ('+str(t.value[0])+')\n')
-  sys.exit()
-  t.lexer.skip(1)
 
-lexer = lex.lex()
+# Taken from ply example in documentation
+def t_error(tok):
+    'Handle lexer error'
+    sys.stderr.write(
+        'line ' + str(_LEXER.lineno) + ': illegal character ('
+        + str(tok.value[0]) + ')\n')
+    sys.exit()
+    tok.lexer.skip(1)
 
-#get input file
-inputFile = open(sys.argv[1], "r").read()
 
-lexer.input(inputFile)
+_LEXER = lex.lex()
 
-"""
-while True:
-    tok = lexer.token()
-    if not tok: 
-         break      # No more input
-    print(tok)
-"""
 
 ####################################################
-#begin parser / yacc 
+# begin parser / yacc
 ####################################################
 
-root = "root not set"
+'''
+The root of the dependency tree. Used for the Prolog output.
+Stores profile rules. Equivalent to the graph.
+'''
+_ROOT = "root not set"
 
-def p_profile(p):
-  'profile : version default ruleList'
-  p[0] = p[2] + p[3]
-  global root
-  root = p[0] 
-  
 
-def p_version(p):
-  'version : TK_LPAREN TK_VERSION TK_OTHERTYPE TK_RPAREN'
-  p[0] = p[2] + p[3]
+def p_profile(par):
+    'profile : version default rule_list'
+    if _CMD_ARGS:
+        par[0] = par[2] + par[3]
+        global _ROOT
+        _ROOT = par[0]
 
-def p_default(p):
-  'default 	: TK_LPAREN decision TK_DEFAULT TK_RPAREN'
-  #p[0] = p[2] + p[3]
-  p[0] = ["profileDefault(profile(\""+sys.argv[2]+"\"),decision(\""+p[2]+"\"))."]
 
-def p_decision(p):
-  '''decision 	: TK_ALLOW 
-		| TK_DENY'''
-  p[0] = p[1]
+def p_version(par):
+    'version : TK_LPAREN TK_VERSION TK_OTHERTYPE TK_RPAREN'
+    par[0] = par[2] + par[3]
 
-def p_ruleList(p):
-  '''ruleList 	: rule ruleList
-		| '''
-  if len(p) == 3:
-    #I'm assuming this will be the sum of two lists
-    p[0] = p[1] + p[2]
-  else:
-    p[0] = [] 
 
-def p_rule(p):
-  '''rule 	: TK_LPAREN decision action objectList TK_RPAREN
-		| TK_LPAREN decision action TK_RPAREN'''
-  #each rule is a list of strings
-  #this code needs to be adjusted to split objectLists apart into separate strings
+def p_default(par):
+    'default 	: TK_LPAREN decision TK_DEFAULT TK_RPAREN'
+    par[0] = par[2] + par[3]
+    # default_opt = par[2]
 
-  #prolog freaks out if I use * outside of a string, so I will replace it.
-  p[3] = p[3].replace('*','STAR')
+    if _CMD_ARGS:
+        par[0] = [
+            "profileDefault(profile(\"" + _CMD_ARGS.output_file
+            + "\"),decision(\"" + par[2] + "\"))."]
 
-  if len(p) == 6:
-    p[0] = []
-    for o in p[4]:	
-      if type(o) is str:
-	#p[0].append(p[2]+"("+p[3] +", [" + o +"]).")
-	p[0].append("profileRule(profile(\""+sys.argv[2]+"\"),decision(\""+p[2] +"\"),operation(\""+ p[3] +"\"),filters(["+ o +"])).")
-      else:
-	#Some facts were not getting periods at the end. I suspect this is the code that needs to be fixed.
-	for anyElement in o:
-	  #p[0].append(p[2]+"("+p[3] +", [" + anyElement +"]).")
-	  p[0].append("profileRule(profile(\""+sys.argv[2]+"\"),decision(\""+p[2] +"\"),operation(\""+ p[3] +"\"),filters(["+ anyElement +"])).")
-  if len(p) == 5:
-    p[0] = ["profileRule(profile(\""+sys.argv[2]+"\"),decision(\""+p[2] +"\"),operation(\""+ p[3] +"\"),filters([]))."]
 
-def p_action(p):
-  'action 	: TK_OTHERTYPE'
-  p[0] = p[1]
+def p_decision(par):
+    '''decision 	: TK_ALLOW
+        | TK_DENY'''
+    par[0] = par[1]
 
-def p_objectList(p):
-  '''objectList : TK_LPAREN object TK_RPAREN objectList
-		| TK_LPAREN object TK_RPAREN 
-		| requireAny objectList
-		| requireAll objectList
-		| requireAny
-		| requireAll '''
-  if len(p) == 5:
-    #what if p[4] contains more than one element?
-    #I think that this is where my trouble with back to back requireAlls is coming from...
-    p[0] = [p[2]] + p[4]
-  if len(p) == 4:
-    p[0] = [p[2]]
-  if len(p) == 3:
-    p[0] = p[1] + p[2]
-  if len(p) == 2:
-    p[0] = p[1]
 
-def p_requireAny(p):
-  'requireAny	:  TK_LPAREN TK_REQANY objectList TK_RPAREN'
-  #look for elements that are lists. This would indicate back to back requireAny's which are redundant.
-  #it should be safe to simply combine these into one list 
-  # (A or B or (C or D)) = (A or B or C or D)
-
-  p[0] = []
-  for anyElement in p[3]:
-    if type(anyElement) is str:
-      p[0].append(anyElement)
+def p_rule_list(par):
+    '''rule_list 	: rule rule_list
+        | '''
+    if len(par) == 3:
+        if par[1] is None and par[2] is not None:
+            par[0] = par[2]
+        elif par[1] is not None and par[2] is None:
+            par[0] = par[1]
+        else:
+            par[0] = par[1] + par[2]
     else:
-      for nestedAny in anyElement:
-	p[0].append(nestedAny)
-  p[0] = [p[0]]
+        par[0] = []
 
-def p_requireAll(p):
-  '''requireAll	:  TK_LPAREN TK_REQALL objectList TK_RPAREN
-		| reqEnt objectList TK_RPAREN
-		| reqEnt TK_RPAREN'''
-  #TODO: add logic to distinguish between the three possibilities.
-  #Could we use objectList instead of entValList?
 
-  #we will be returning a list of strings at the end of this.
-  returnedList = []
-  p[0] = [""] 
-  if len(p) == 5:
-    returnedList = p[3]
-  if len(p) == 4:
-    returnedList = p[2]
+def _rebuild_req_ent(paths):
+    l = len(paths)
+    i = 0
+    paths_to_remove = []
 
-  for allElement in returnedList:
-    if type(allElement) is str:
-      for i in range(len(p[0])):
-	if p[0][i] == "":
-	  p[0][i] = allElement
-	else:
-	  p[0][i] = p[0][i] +","+ allElement
+    while i < l:
+        if "require-entitlement" in paths[i]:
+            j = i
+            values = []
+            i += 1
+
+            while i < l and "entitlement-value" in paths[i]:
+                values.append(paths[i])
+                paths_to_remove.append(i)
+                i += 1
+
+            if values:
+                paths[j] = paths[j][:-1] + ", " + ", ".join(values) + ")"
+        else:
+            i += 1
+
+    for p in paths_to_remove:
+        paths.pop(p)
+
+    return paths
+
+
+def _add_to_graph(decision, operation, path):
+    'Add one path to a terminal node to one operation'
+    if decision == _DEFAULT_DEC:
+        return
+
+    if path:
+        paths = _rebuild_req_ent(path.split(','))
+
+        if operation in _GRAPH:
+            _GRAPH[operation].append(paths)
+        else:
+            _GRAPH[operation] = [paths]
     else:
-      splitGen = []
-      for anyElement in allElement:
-	iteration = []
-	for i in range(len(p[0])):
-	  #TODO: I think this is where the extra commas are coming from
-	  if p[0][i] == "":
-	    iteration.append(anyElement)
-	  else:
-	    iteration.append(p[0][i] +","+ anyElement)
-	splitGen += iteration
-      p[0] = splitGen
-
-  #If this was in the context of require-entitlement,
-  #then I need to wrap all the entitlement values in the list of the proper functor.
-  if len(p) == 4:
-    for i in range(len(p[0])):
-      p[0][i] = "require-entitlement("+ p[1] +",["+ p[0][i] +"])"
-    #this is a guess for how to solve requireAll( requireEnt ( ...))
-
-  if len(p) == 3:
-    #without an entValList, there are no elements to process
-    p[0] = ["require-entitlement("+ p[1] +",[])"]
-
-  #is it safe to have all requireAlls return a list containing a list of strings?
-  #TODO : this seems to work, so I will keep it for now and verify later...
-  p[0] = [p[0]]
+        _GRAPH[operation] = []
 
 
-def p_reqEnt(p):
-  'reqEnt	: TK_LPAREN TK_REQENT TK_FILTER'
-  p[0] = p[3]
+def p_rule(par):
+    '''rule 	: TK_LPAREN decision action object_list TK_RPAREN
+        | TK_LPAREN decision action TK_RPAREN'''
+    # Each rule is a list of strings.
+    # This code needs to be adjusted to split object_lists apart into separate
+    # strings.
+
+    # Prolog freaks out if I use * outside of a string, so I will replace it.
+    if _CMD_ARGS:
+        par[3] = par[3].replace('*', 'STAR')
+
+    if len(par) == 6:
+        par[0] = []
+        for filters in par[4]:
+            if isinstance(filters, str):
+                if _CMD_ARGS:
+                    par[0].append(
+                        "profileRule(profile(\"" + _CMD_ARGS.output_file
+                        + "\"),decision(\"" + par[2] + "\"),operation(\""
+                        + par[3] + "\"),filters([" + filters + "])).")
+                else:
+                    _add_to_graph(par[2], par[3], filters)
+            else:
+                # Some facts were not getting periods at the end.
+                # I suspect this is the code that needs to be fixed.
+                for any_element in filters:
+                    if _CMD_ARGS:
+                        par[0].append(
+                            "profileRule(profile(\"" + _CMD_ARGS.output_file
+                            + "\"),decision(\"" + par[2] + "\"),operation(\""
+                            + par[3] + "\"),filters([" + any_element + "])).")
+                    else:
+                        _add_to_graph(par[2], par[3], any_element)
+
+    if _CMD_ARGS and len(par) == 5:
+        par[0] = [
+            "profileRule(profile(\"" + _CMD_ARGS.output_file
+            + "\"),decision(\"" + par[2] + "\"),operation(\"" + par[3]
+            + "\"),filters([]))."]
+    elif len(par) == 5:
+        _add_to_graph(par[2], par[3], [])
 
 
+def p_action(par):
+    'action 	: TK_OTHERTYPE'
+    par[0] = par[1]
 
 
-#TODO: the TK_ENTVAL TK_BOOL is a temporary fix and should be removed once we fix our SBPL profiles
-#TODO: I need to be more careful about the way we handle requireEntitlement
-def p_object(p):
-  '''object 	: otherType TK_FILTER
-		| regexFilter
-		| otherType otherType
-		| otherType otherType TK_FILTER
-		| subpath
-		| prefix
-		| filemode
-		| TK_REQNOT TK_LPAREN object TK_RPAREN
-		| TK_REQNOT TK_LPAREN simpleEntValObject TK_RPAREN
-		| TK_VNODETYPE otherType
-		| otherType TK_LPAREN otherType TK_FILTER otherType TK_RPAREN
-		| TK_DEBUGMODE'''
-  if len(p) == 2:
-    p[0] = p[1]
-  if len(p) == 3:
-    p[0] = p[1] +"("+ p[2]+ ")"
-  if len(p) == 4:
-    p[0] = p[1] +"("+ p[2] +"("+ p[3] +"))"
-  if len(p) == 5:
-    if type(p[3]) is str:
-      p[0] = p[1] + p[2] + p[3] + p[4]
-    #requireNot could be wrapped around a bundled regular expression
-    #In this case, it should be treated like a requireAll by concatenating strings
+def p_object_list(par):
+    '''object_list : TK_LPAREN object TK_RPAREN object_list
+        | TK_LPAREN object TK_RPAREN
+        | require_any object_list
+        | require_all object_list
+        | require_any
+        | require_all '''
+    if len(par) == 5:
+        # What if par[4] contains more than one element?
+        # I think that this is where my trouble with back to back require_alls
+        # is coming from...
+        par[0] = [par[2]] + par[4]
+    if len(par) == 4:
+        par[0] = [par[2]]
+    if len(par) == 3:
+        par[0] = par[1] + par[2]
+    if len(par) == 2:
+        par[0] = par[1]
+
+
+def p_require_any(par):
+    'require_any	:  TK_LPAREN TK_REQANY object_list TK_RPAREN'
+    # Look for elements that are lists. This would indicate back to back
+    # require_any's which are redundant.
+    # It should be safe to simply combine these into one list.
+    # (A or B or (C or D)) = (A or B or C or D)
+
+    par[0] = []
+    for any_element in par[3]:
+        if isinstance(any_element, str):
+            par[0].append(any_element)
+        else:
+            for nested_any in any_element:
+                par[0].append(nested_any)
+    par[0] = [par[0]]
+
+
+def p_require_all(par):
+    '''require_all	:  TK_LPAREN TK_REQALL object_list TK_RPAREN
+        | req_ent object_list TK_RPAREN
+        | req_ent TK_RPAREN'''
+    # TODO: add logic to distinguish between the three possibilities
+    # Could we use object_list instead of entValList?
+
+    # We will be returning a list of strings at the end of this.
+    returned_list = []
+    par[0] = [""]
+    if len(par) == 5:
+        returned_list = par[3]
+    if len(par) == 4:
+        returned_list = par[2]
+
+    for all_element in returned_list:
+        if isinstance(all_element, str):
+            for i in range(len(par[0])):
+                if par[0][i] == "":
+                    par[0][i] = all_element
+                else:
+                    par[0][i] = par[0][i] + "," + all_element
+        else:
+            split_gen = []
+            for any_element in all_element:
+                iteration = []
+                for i in range(len(par[0])):
+                    # TODO: I think this is where the extra commas are coming
+                    # from
+                    if par[0][i] == "":
+                        iteration.append(any_element)
+                    else:
+                        iteration.append(par[0][i] + "," + any_element)
+                split_gen += iteration
+            par[0] = split_gen
+
+    # If this was in the context of require-entitlement, then I need to wrap
+    # all the entitlement values in the list of the proper functor.
+    if len(par) == 4:
+        for i in range(len(par[0])):
+            par[0][i] = \
+                "require-entitlement(" + par[1] + ",[" + par[0][i] + "])"
+        # This is a guess for how to solve require_all( requireEnt ( ...))
+
+    if len(par) == 3:
+        # Without an entValList, there are no elements to process
+        if _CMD_ARGS:
+            par[0] = ["require-entitlement(" + par[1] + ",[])"]
+        else:
+            par[0] = ["require-entitlement(" + par[1] + ")"]
+
+    # Is it safe to have all require_alls return a list containing a list of
+    # strings?
+    # TODO: this seems to work, so I will keep it for now and verify later...
+    par[0] = [par[0]]
+
+
+def p_req_ent(par):
+    'req_ent	: TK_LPAREN TK_REQENT TK_FILTER'
+    par[0] = par[3]
+
+
+# TODO: the TK_ENTVAL TK_BOOL is a temporary fix and should be removed once we
+# fix our SBPL profiles
+# TODO: I need to be more careful about the way we handle requireEntitlement
+def p_object(par):
+    '''object 	: other_type TK_FILTER
+        | regex_filter
+        | other_type other_type
+        | other_type other_type TK_FILTER
+        | subpath
+        | prefix
+        | filemode
+        | TK_REQNOT TK_LPAREN object TK_RPAREN
+        | TK_REQNOT TK_LPAREN simple_ent_val_object TK_RPAREN
+        | TK_VNODETYPE other_type
+        | other_type TK_LPAREN other_type TK_FILTER other_type TK_RPAREN
+        | TK_DEBUGMODE'''
+        
+    if len(par) == 2:
+        par[0] = par[1]
+    if len(par) == 3:
+        par[0] = par[1] + "(" + par[2] + ")"
+    if len(par) == 4:
+        if _CMD_ARGS:
+            par[0] = par[1] + "(" + par[2] + "(" + par[3] + "))"
+        else:
+            par[0] = par[1] + "(" + par[2] + " " + par[3] + ")"
+    if len(par) == 5:
+        if isinstance(par[3], str):
+            par[0] = par[1] + par[2] + par[3] + par[4]
+        # requireNot could be wrapped around a bundled regular expression
+        # In this case, it should be treated like a require_all by
+        # concatenating strings.
+        else:
+            par[0] = ""
+            for any_element in par[3]:
+                if par[0] == "":
+                    par[0] = par[1] + par[2] + any_element + par[4]
+                else:
+                    par[0] += "," + par[1] + par[2] + any_element + par[4]
+
+    # This is for the system-fsctl operation which has very complex filters.
+    # TODO: we should make a more generic expression that can match any filter,
+    # but not metafilters or implied metafilters.
+    if len(par) == 7:
+        temp = '"' + par[3] + '"'
+        par[3] = temp
+        if _CMD_ARGS:
+            par[0] = par[1] + "((" + par[3] + "," + par[4] + "," + par[5] + "))"
+        else:
+            par[0] = par[1] + "((" + par[3][1:-1] + " " + par[4] + " " + par[5] + "))"
+
+
+def p_filemode(par):
+    'filemode : TK_FILEMODETYPE TK_MODENUMBER'
+    if _CMD_ARGS:
+        par[0] = par[1] + "(\"" + par[2] + "\")"
     else:
-      p[0]=""
-      for anyElement in p[3]:
-	if p[0] == "":
-	  p[0] = p[1] + p[2] + anyElement + p[4] 
-	else:
-	  p[0] += "," + p[1] + p[2] + anyElement + p[4]
-#this is for the system-fsctl operation which has very complex filters
-#TODO: we should make a more generic expression that can match any filter, but not metafilters or implied metafilters.
-  if len(p) == 7:
-    temp = '"'+p[3]+'"'
-    p[3] = temp
-    p[0] = p[1] +"("+  p[3] +","+ p[4] +","+ p[5] +")"
-
-def p_filemode(p):
-  'filemode : TK_FILEMODETYPE TK_MODENUMBER'
-  p[0] = p[1] +"(\""+ p[2]+ "\")"
-
-def p_subpath(p):
-  'subpath	: TK_SUBPATH TK_FILTER'
-  p[2] = p[2][:-1] + '/"'
-  p[0] = p[1] +"("+ p[2]+ ")"
-
-def p_prefix(p):
-  '''prefix : TK_LPREFIX TK_FILTER
-	    | TK_SPREFIX TK_FILTER
-	    | TK_RPREFIX TK_FILTER'''
-
-  #if there is a variable in the prefix
-  if "{" in p[2]:
-    #do the ugly regex work here, and just rip out what I need from the filter. This is good enough.
-    pattern = re.compile('"\${([^}]*)}([^"]*)"')
-    matches = pattern.match(p[2])
-    p[0] = p[1] + "(variable(\"" + matches.group(1) + "\"),path(\"" + matches.group(2) + "\"))"
-  #if there is not a variable in the prefix then we just treat the filter like a subpath
-  #this might be too vague, but let's see what happens.
-  else:
-    #I am not appending a / since prefixes might state literals in the filter argument.
-    p[0] = "subpath(" + p[2] + ")"
+        par[0] = par[1] + "(" + par[2] + ")"
 
 
-#TODO: this is sort of a hack and I should evaluate it effects carefully
-#the issue is that requireNot can now accept entitlement requirements as parameters
-def p_simpleEntValObject(p):
-  'simpleEntValObject	: TK_REQENT TK_FILTER'
-  p[0] = p[1] +"("+ p[2] +")"
-  #p[0] = "todoFixNegatedEnts"
+def p_subpath(par):
+    'subpath	: TK_SUBPATH TK_FILTER'
+    if _CMD_ARGS:
+        par[2] = par[2][:-1] + '/"'
+    par[0] = par[1] + "(" + par[2] + ")"
 
-def p_otherType(p):
-  'otherType : TK_OTHERTYPE'
-  #Some filter types are capitalized, but this confuses Prolog, so we make them lowercase
-  p[1] = p[1].lower()
-  p[0] = p[1] 
- 
-def p_regexFilter(p):
-  'regexFilter : TK_OTHERTYPE regexList'
-  p[0] = []
-  for r in p[2]:
-    r = r[1:]
-    r += "/i"
-    r = r.replace("\\.","[.]")
-    p[0].append( p[1] + "(" + r + ")" )
 
-def p_regexList(p):
-  '''regexList 	: TK_REGEXPRESSION regexList
-		| TK_REGEXPRESSION'''
-  if len(p) == 2:
-    p[0] = [p[1]]
-  if len(p) == 3:
-    p[0] = [p[1]] + p[2]
+def p_prefix(par):
+    '''prefix : TK_LPREFIX TK_FILTER
+            | TK_SPREFIX TK_FILTER
+            | TK_RPREFIX TK_FILTER'''
 
-def p_error(p):
-  if p == None:
-    sys.stderr.write('line '+str(lexer.lineno)+': syntax error at EOF\n')
-  else:
-    sys.stderr.write('line '+str(lexer.lineno)+': syntax error near '+str(p.value)+'\n')
-  sys.exit()
+    # If there is a variable in the prefix.
+    if _CMD_ARGS:
+        if "{" in par[2]:
+            # Do the ugly regex work here, and just rip out what I need from the
+            # filter. This is good enough.
+            pattern = re.compile(r'"\${([^}]*)}([^"]*)"')
+            matches = pattern.match(par[2])
+            par[0] = par[1] + "(variable(\"" + matches.group(1) + "\"),path(\""\
+                + matches.group(2) + "\"))"
+        # If there is not a variable in the prefix then we just treat the filter
+        # like a subpath.
+        # This might be too vague, but let's see what happens.
+        else:
+            # I am not appending a / since prefixes might state literals in the
+            # filter argument.
+            par[0] = "subpath(" + par[2] + ")"
+    else:
+        par[0] = par[1] + "(" + par[2] + ")"
 
-parser = yacc.yacc()
 
-parser.parse(inputFile)
+# TODO: this is sort of a hack and I should evaluate it effects carefully.
+# The issue is that requireNot can now accept entitlement requirements as
+# parameters.
+def p_simple_ent_val_object(par):
+    'simple_ent_val_object	: TK_REQENT TK_FILTER'
+    par[0] = par[1] + "(" + par[2] + ")"
 
-print "\n",
-for r in root:
-  print r
+
+def p_other_type(par):
+    'other_type : TK_OTHERTYPE'
+    # Some filter types are capitalized, but this confuses Prolog, so we make
+    # them lowercase.
+    if _CMD_ARGS:
+        par[1] = par[1].lower()
+    par[0] = par[1]
+
+
+def p_regex_filter(par):
+    'regex_filter : TK_OTHERTYPE regex_list'
+    if _CMD_ARGS:
+        par[0] = []
+        for regex in par[2]:
+            regex = regex[1:]
+            regex += "/i"
+            regex = regex.replace("\\.", "[.]")
+
+            par[0].append(par[1] + "(" + regex + ")")
+    else:
+        par[0] = par[1] + "(" + " ".join(par[2]) + ")"
+
+
+def p_regex_list(par):
+    '''regex_list 	: TK_REGEXPRESSION regex_list
+        | TK_REGEXPRESSION'''
+    if len(par) == 2:
+        par[0] = [par[1]]
+    if len(par) == 3:
+        par[0] = [par[1]] + par[2]
+
+
+def p_error(par):
+    'Handle parsing error'
+    if par is None:
+        sys.stderr.write(
+            'line ' + str(_LEXER.lineno) + ': syntax error at EOF\n')
+    else:
+        sys.stderr.write(
+            'line ' + str(_LEXER.lineno) + ': syntax error near '
+            + str(par.value) + '\n')
+    sys.exit()
+
+
+def _get_args():
+    'Place the command-line args into the _CMD_ARGS global variable'
+    global _CMD_ARGS
+
+    parser = ArgumentParser('Compile an Apple Sandbox profile to Prolog')
+    parser.add_argument(
+        '-i', '--input', dest='input_file', type=str,
+        required=True, help='the input file name')
+    parser.add_argument(
+        '-o', '--output', dest='output_file', type=str,
+        required=True, help='the output Prolog file name')
+
+    _CMD_ARGS = parser.parse_args()
+
+
+def parse_file(file_name):
+    'Return the dependency graph from an SBPL file'
+    input_file = open(file_name, "r").read()
+    _LEXER.input(input_file)
+
+    parser = yacc.yacc()
+    parser.parse(input_file)
+
+    return _GRAPH
+
+
+if __name__ == '__main__':
+    _get_args()
+    parse_file(_CMD_ARGS.input_file)
+
+    for rule in _ROOT:
+        print(rule)
