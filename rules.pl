@@ -108,7 +108,7 @@ query3:-
   fail.
 
 
-% Query 4 is similar to query 2, but it only show subpaths and literals that are in /private/var/mobile
+% Query 4 is similar to query 2, but it only shows subpaths and literals that are in /private/var/mobile
 query4 :-
   allow(O, A),
   getreadOps(R), member(O, R), %limits O to read operations
