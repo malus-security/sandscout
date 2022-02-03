@@ -4,7 +4,7 @@ SandScout is a framework to extract, decompile, formally model, and analyze iOS 
 It uses Prolog-based queries to evaluate file-based security properties of iOS sandbox profiles.
 
 The [SandScout paper](https://dl.acm.org/doi/10.1145/2976749.2978336) (`SandScout: Automatic Detection of Flaws in iOS Sandbox Profiles`), presented at ACM CCS 2016, details the architecture and implementation of SandScout and our findings.
-In the paper SandScout was used to evaluate the `container` sandbox profile for iOS 9.0.2 and discover seven classes of exploitable vulnerabilities.
+In the paper, SandScout was used to evaluate the `container` sandbox profile for iOS 9.0.2 and discover seven classes of exploitable vulnerabilities.
 
 SandScout is open source software released under the 3-clause BSD license.
 
