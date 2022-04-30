@@ -26,7 +26,7 @@ echo "* Merging Prolog facts (facts.pl) and Prolog rules (rules.pl) in factsAndR
 cat facts.pl rules.pl > factsAndRules.pl
 
 echo "* Using script.pl to execute Prolog queries ..."
-swi-prolog.swipl -s script.pl --quiet
+swipl -s script.pl --quiet
 
 echo ""
 echo "See output of Prolog queries in outputFromQueries/ folder."

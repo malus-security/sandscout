@@ -2,10 +2,7 @@
 
 import ply.lex as lex
 import ply.yacc as yacc
-import os
 import sys
-import fileinput
-import re
 
 
 ####################################################

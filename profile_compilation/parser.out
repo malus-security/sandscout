@@ -1,0 +1,947 @@
+Created by PLY version 3.11 (http://www.dabeaz.com/ply)
+
+Unused terminals:
+
+    TK_BOOL
+
+Grammar
+
+Rule 0     S' -> profile
+Rule 1     profile -> version default ruleList
+Rule 2     version -> TK_LPAREN TK_VERSION TK_OTHERTYPE TK_RPAREN
+Rule 3     default -> TK_LPAREN decision TK_DEFAULT TK_RPAREN
+Rule 4     decision -> TK_ALLOW
+Rule 5     decision -> TK_DENY
+Rule 6     ruleList -> rule ruleList
+Rule 7     ruleList -> <empty>
+Rule 8     rule -> TK_LPAREN decision action objectList TK_RPAREN
+Rule 9     rule -> TK_LPAREN decision action TK_RPAREN
+Rule 10    action -> TK_OTHERTYPE
+Rule 11    objectList -> TK_LPAREN object TK_RPAREN objectList
+Rule 12    objectList -> TK_LPAREN object TK_RPAREN
+Rule 13    objectList -> requireAny objectList
+Rule 14    objectList -> requireAll objectList
+Rule 15    objectList -> requireAny
+Rule 16    objectList -> requireAll
+Rule 17    requireAny -> TK_LPAREN TK_REQANY objectList TK_RPAREN
+Rule 18    requireAll -> TK_LPAREN TK_REQALL objectList TK_RPAREN
+Rule 19    requireAll -> reqEnt objectList TK_RPAREN
+Rule 20    requireAll -> reqEnt TK_RPAREN
+Rule 21    reqEnt -> TK_LPAREN TK_REQENT TK_FILTER
+Rule 22    object -> otherType TK_FILTER
+Rule 23    object -> regexFilter
+Rule 24    object -> otherType otherType
+Rule 25    object -> otherType otherType TK_FILTER
+Rule 26    object -> subpath
+Rule 27    object -> prefix
+Rule 28    object -> filemode
+Rule 29    object -> TK_REQNOT TK_LPAREN object TK_RPAREN
+Rule 30    object -> TK_REQNOT TK_LPAREN simpleEntValObject TK_RPAREN
+Rule 31    object -> TK_VNODETYPE otherType
+Rule 32    object -> otherType TK_LPAREN otherType TK_FILTER otherType TK_RPAREN
+Rule 33    object -> TK_DEBUGMODE
+Rule 34    filemode -> TK_FILEMODETYPE TK_MODENUMBER
+Rule 35    subpath -> TK_SUBPATH TK_FILTER
+Rule 36    prefix -> TK_LPREFIX TK_FILTER
+Rule 37    prefix -> TK_SPREFIX TK_FILTER
+Rule 38    prefix -> TK_RPREFIX TK_FILTER
+Rule 39    simpleEntValObject -> TK_REQENT TK_FILTER
+Rule 40    otherType -> TK_OTHERTYPE
+Rule 41    regexFilter -> TK_OTHERTYPE regexList
+Rule 42    regexList -> TK_REGEXPRESSION regexList
+Rule 43    regexList -> TK_REGEXPRESSION
+
+Terminals, with rules where they appear
+
+TK_ALLOW             : 4
+TK_BOOL              : 
+TK_DEBUGMODE         : 33
+TK_DEFAULT           : 3
+TK_DENY              : 5
+TK_FILEMODETYPE      : 34
+TK_FILTER            : 21 22 25 32 35 36 37 38 39
+TK_LPAREN            : 2 3 8 9 11 12 17 18 21 29 30 32
+TK_LPREFIX           : 36
+TK_MODENUMBER        : 34
+TK_OTHERTYPE         : 2 10 40 41
+TK_REGEXPRESSION     : 42 43
+TK_REQALL            : 18
+TK_REQANY            : 17
+TK_REQENT            : 21 39
+TK_REQNOT            : 29 30
+TK_RPAREN            : 2 3 8 9 11 12 17 18 19 20 29 30 32
+TK_RPREFIX           : 38
+TK_SPREFIX           : 37
+TK_SUBPATH           : 35
+TK_VERSION           : 2
+TK_VNODETYPE         : 31
+error                : 
+
+Nonterminals, with rules where they appear
+
+action               : 8 9
+decision             : 3 8 9
+default              : 1
+filemode             : 28
+object               : 11 12 29
+objectList           : 8 11 13 14 17 18 19
+otherType            : 22 24 24 25 25 31 32 32 32
+prefix               : 27
+profile              : 0
+regexFilter          : 23
+regexList            : 41 42
+reqEnt               : 19 20
+requireAll           : 14 16
+requireAny           : 13 15
+rule                 : 6
+ruleList             : 1 6
+simpleEntValObject   : 30
+subpath              : 26
+version              : 1
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . profile
+    (1) profile -> . version default ruleList
+    (2) version -> . TK_LPAREN TK_VERSION TK_OTHERTYPE TK_RPAREN
+
+    TK_LPAREN       shift and go to state 3
+
+    profile                        shift and go to state 1
+    version                        shift and go to state 2
+
+state 1
+
+    (0) S' -> profile .
+
+
+
+state 2
+
+    (1) profile -> version . default ruleList
+    (3) default -> . TK_LPAREN decision TK_DEFAULT TK_RPAREN
+
+    TK_LPAREN       shift and go to state 5
+
+    default                        shift and go to state 4
+
+state 3
+
+    (2) version -> TK_LPAREN . TK_VERSION TK_OTHERTYPE TK_RPAREN
+
+    TK_VERSION      shift and go to state 6
+
+
+state 4
+
+    (1) profile -> version default . ruleList
+    (6) ruleList -> . rule ruleList
+    (7) ruleList -> .
+    (8) rule -> . TK_LPAREN decision action objectList TK_RPAREN
+    (9) rule -> . TK_LPAREN decision action TK_RPAREN
+
+    $end            reduce using rule 7 (ruleList -> .)
+    TK_LPAREN       shift and go to state 9
+
+    ruleList                       shift and go to state 7
+    rule                           shift and go to state 8
+
+state 5
+
+    (3) default -> TK_LPAREN . decision TK_DEFAULT TK_RPAREN
+    (4) decision -> . TK_ALLOW
+    (5) decision -> . TK_DENY
+
+    TK_ALLOW        shift and go to state 11
+    TK_DENY         shift and go to state 12
+
+    decision                       shift and go to state 10
+
+state 6
+
+    (2) version -> TK_LPAREN TK_VERSION . TK_OTHERTYPE TK_RPAREN
+
+    TK_OTHERTYPE    shift and go to state 13
+
+
+state 7
+
+    (1) profile -> version default ruleList .
+
+    $end            reduce using rule 1 (profile -> version default ruleList .)
+
+
+state 8
+
+    (6) ruleList -> rule . ruleList
+    (6) ruleList -> . rule ruleList
+    (7) ruleList -> .
+    (8) rule -> . TK_LPAREN decision action objectList TK_RPAREN
+    (9) rule -> . TK_LPAREN decision action TK_RPAREN
+
+    $end            reduce using rule 7 (ruleList -> .)
+    TK_LPAREN       shift and go to state 9
+
+    rule                           shift and go to state 8
+    ruleList                       shift and go to state 14
+
+state 9
+
+    (8) rule -> TK_LPAREN . decision action objectList TK_RPAREN
+    (9) rule -> TK_LPAREN . decision action TK_RPAREN
+    (4) decision -> . TK_ALLOW
+    (5) decision -> . TK_DENY
+
+    TK_ALLOW        shift and go to state 11
+    TK_DENY         shift and go to state 12
+
+    decision                       shift and go to state 15
+
+state 10
+
+    (3) default -> TK_LPAREN decision . TK_DEFAULT TK_RPAREN
+
+    TK_DEFAULT      shift and go to state 16
+
+
+state 11
+
+    (4) decision -> TK_ALLOW .
+
+    TK_DEFAULT      reduce using rule 4 (decision -> TK_ALLOW .)
+    TK_OTHERTYPE    reduce using rule 4 (decision -> TK_ALLOW .)
+
+
+state 12
+
+    (5) decision -> TK_DENY .
+
+    TK_DEFAULT      reduce using rule 5 (decision -> TK_DENY .)
+    TK_OTHERTYPE    reduce using rule 5 (decision -> TK_DENY .)
+
+
+state 13
+
+    (2) version -> TK_LPAREN TK_VERSION TK_OTHERTYPE . TK_RPAREN
+
+    TK_RPAREN       shift and go to state 17
+
+
+state 14
+
+    (6) ruleList -> rule ruleList .
+
+    $end            reduce using rule 6 (ruleList -> rule ruleList .)
+
+
+state 15
+
+    (8) rule -> TK_LPAREN decision . action objectList TK_RPAREN
+    (9) rule -> TK_LPAREN decision . action TK_RPAREN
+    (10) action -> . TK_OTHERTYPE
+
+    TK_OTHERTYPE    shift and go to state 19
+
+    action                         shift and go to state 18
+
+state 16
+
+    (3) default -> TK_LPAREN decision TK_DEFAULT . TK_RPAREN
+
+    TK_RPAREN       shift and go to state 20
+
+
+state 17
+
+    (2) version -> TK_LPAREN TK_VERSION TK_OTHERTYPE TK_RPAREN .
+
+    TK_LPAREN       reduce using rule 2 (version -> TK_LPAREN TK_VERSION TK_OTHERTYPE TK_RPAREN .)
+
+
+state 18
+
+    (8) rule -> TK_LPAREN decision action . objectList TK_RPAREN
+    (9) rule -> TK_LPAREN decision action . TK_RPAREN
+    (11) objectList -> . TK_LPAREN object TK_RPAREN objectList
+    (12) objectList -> . TK_LPAREN object TK_RPAREN
+    (13) objectList -> . requireAny objectList
+    (14) objectList -> . requireAll objectList
+    (15) objectList -> . requireAny
+    (16) objectList -> . requireAll
+    (17) requireAny -> . TK_LPAREN TK_REQANY objectList TK_RPAREN
+    (18) requireAll -> . TK_LPAREN TK_REQALL objectList TK_RPAREN
+    (19) requireAll -> . reqEnt objectList TK_RPAREN
+    (20) requireAll -> . reqEnt TK_RPAREN
+    (21) reqEnt -> . TK_LPAREN TK_REQENT TK_FILTER
+
+    TK_RPAREN       shift and go to state 23
+    TK_LPAREN       shift and go to state 21
+
+    objectList                     shift and go to state 22
+    requireAny                     shift and go to state 24
+    requireAll                     shift and go to state 25
+    reqEnt                         shift and go to state 26
+
+state 19
+
+    (10) action -> TK_OTHERTYPE .
+
+    TK_RPAREN       reduce using rule 10 (action -> TK_OTHERTYPE .)
+    TK_LPAREN       reduce using rule 10 (action -> TK_OTHERTYPE .)
+
+
+state 20
+
+    (3) default -> TK_LPAREN decision TK_DEFAULT TK_RPAREN .
+
+    TK_LPAREN       reduce using rule 3 (default -> TK_LPAREN decision TK_DEFAULT TK_RPAREN .)
+    $end            reduce using rule 3 (default -> TK_LPAREN decision TK_DEFAULT TK_RPAREN .)
+
+
+state 21
+
+    (11) objectList -> TK_LPAREN . object TK_RPAREN objectList
+    (12) objectList -> TK_LPAREN . object TK_RPAREN
+    (17) requireAny -> TK_LPAREN . TK_REQANY objectList TK_RPAREN
+    (18) requireAll -> TK_LPAREN . TK_REQALL objectList TK_RPAREN
+    (21) reqEnt -> TK_LPAREN . TK_REQENT TK_FILTER
+    (22) object -> . otherType TK_FILTER
+    (23) object -> . regexFilter
+    (24) object -> . otherType otherType
+    (25) object -> . otherType otherType TK_FILTER
+    (26) object -> . subpath
+    (27) object -> . prefix
+    (28) object -> . filemode
+    (29) object -> . TK_REQNOT TK_LPAREN object TK_RPAREN
+    (30) object -> . TK_REQNOT TK_LPAREN simpleEntValObject TK_RPAREN
+    (31) object -> . TK_VNODETYPE otherType
+    (32) object -> . otherType TK_LPAREN otherType TK_FILTER otherType TK_RPAREN
+    (33) object -> . TK_DEBUGMODE
+    (40) otherType -> . TK_OTHERTYPE
+    (41) regexFilter -> . TK_OTHERTYPE regexList
+    (35) subpath -> . TK_SUBPATH TK_FILTER
+    (36) prefix -> . TK_LPREFIX TK_FILTER
+    (37) prefix -> . TK_SPREFIX TK_FILTER
+    (38) prefix -> . TK_RPREFIX TK_FILTER
+    (34) filemode -> . TK_FILEMODETYPE TK_MODENUMBER
+
+    TK_REQANY       shift and go to state 28
+    TK_REQALL       shift and go to state 29
+    TK_REQENT       shift and go to state 30
+    TK_REQNOT       shift and go to state 36
+    TK_VNODETYPE    shift and go to state 37
+    TK_DEBUGMODE    shift and go to state 38
+    TK_OTHERTYPE    shift and go to state 39
+    TK_SUBPATH      shift and go to state 40
+    TK_LPREFIX      shift and go to state 41
+    TK_SPREFIX      shift and go to state 42
+    TK_RPREFIX      shift and go to state 43
+    TK_FILEMODETYPE shift and go to state 44
+
+    object                         shift and go to state 27
+    otherType                      shift and go to state 31
+    regexFilter                    shift and go to state 32
+    subpath                        shift and go to state 33
+    prefix                         shift and go to state 34
+    filemode                       shift and go to state 35
+
+state 22
+
+    (8) rule -> TK_LPAREN decision action objectList . TK_RPAREN
+
+    TK_RPAREN       shift and go to state 45
+
+
+state 23
+
+    (9) rule -> TK_LPAREN decision action TK_RPAREN .
+
+    TK_LPAREN       reduce using rule 9 (rule -> TK_LPAREN decision action TK_RPAREN .)
+    $end            reduce using rule 9 (rule -> TK_LPAREN decision action TK_RPAREN .)
+
+
+state 24
+
+    (13) objectList -> requireAny . objectList
+    (15) objectList -> requireAny .
+    (11) objectList -> . TK_LPAREN object TK_RPAREN objectList
+    (12) objectList -> . TK_LPAREN object TK_RPAREN
+    (13) objectList -> . requireAny objectList
+    (14) objectList -> . requireAll objectList
+    (15) objectList -> . requireAny
+    (16) objectList -> . requireAll
+    (17) requireAny -> . TK_LPAREN TK_REQANY objectList TK_RPAREN
+    (18) requireAll -> . TK_LPAREN TK_REQALL objectList TK_RPAREN
+    (19) requireAll -> . reqEnt objectList TK_RPAREN
+    (20) requireAll -> . reqEnt TK_RPAREN
+    (21) reqEnt -> . TK_LPAREN TK_REQENT TK_FILTER
+
+    TK_RPAREN       reduce using rule 15 (objectList -> requireAny .)
+    TK_LPAREN       shift and go to state 21
+
+    requireAny                     shift and go to state 24
+    objectList                     shift and go to state 46
+    requireAll                     shift and go to state 25
+    reqEnt                         shift and go to state 26
+
+state 25
+
+    (14) objectList -> requireAll . objectList
+    (16) objectList -> requireAll .
+    (11) objectList -> . TK_LPAREN object TK_RPAREN objectList
+    (12) objectList -> . TK_LPAREN object TK_RPAREN
+    (13) objectList -> . requireAny objectList
+    (14) objectList -> . requireAll objectList
+    (15) objectList -> . requireAny
+    (16) objectList -> . requireAll
+    (17) requireAny -> . TK_LPAREN TK_REQANY objectList TK_RPAREN
+    (18) requireAll -> . TK_LPAREN TK_REQALL objectList TK_RPAREN
+    (19) requireAll -> . reqEnt objectList TK_RPAREN
+    (20) requireAll -> . reqEnt TK_RPAREN
+    (21) reqEnt -> . TK_LPAREN TK_REQENT TK_FILTER
+
+    TK_RPAREN       reduce using rule 16 (objectList -> requireAll .)
+    TK_LPAREN       shift and go to state 21
+
+    requireAll                     shift and go to state 25
+    objectList                     shift and go to state 47
+    requireAny                     shift and go to state 24
+    reqEnt                         shift and go to state 26
+
+state 26
+
+    (19) requireAll -> reqEnt . objectList TK_RPAREN
+    (20) requireAll -> reqEnt . TK_RPAREN
+    (11) objectList -> . TK_LPAREN object TK_RPAREN objectList
+    (12) objectList -> . TK_LPAREN object TK_RPAREN
+    (13) objectList -> . requireAny objectList
+    (14) objectList -> . requireAll objectList
+    (15) objectList -> . requireAny
+    (16) objectList -> . requireAll
+    (17) requireAny -> . TK_LPAREN TK_REQANY objectList TK_RPAREN
+    (18) requireAll -> . TK_LPAREN TK_REQALL objectList TK_RPAREN
+    (19) requireAll -> . reqEnt objectList TK_RPAREN
+    (20) requireAll -> . reqEnt TK_RPAREN
+    (21) reqEnt -> . TK_LPAREN TK_REQENT TK_FILTER
+
+    TK_RPAREN       shift and go to state 49
+    TK_LPAREN       shift and go to state 21
+
+    reqEnt                         shift and go to state 26
+    objectList                     shift and go to state 48
+    requireAny                     shift and go to state 24
+    requireAll                     shift and go to state 25
+
+state 27
+
+    (11) objectList -> TK_LPAREN object . TK_RPAREN objectList
+    (12) objectList -> TK_LPAREN object . TK_RPAREN
+
+    TK_RPAREN       shift and go to state 50
+
+
+state 28
+
+    (17) requireAny -> TK_LPAREN TK_REQANY . objectList TK_RPAREN
+    (11) objectList -> . TK_LPAREN object TK_RPAREN objectList
+    (12) objectList -> . TK_LPAREN object TK_RPAREN
+    (13) objectList -> . requireAny objectList
+    (14) objectList -> . requireAll objectList
+    (15) objectList -> . requireAny
+    (16) objectList -> . requireAll
+    (17) requireAny -> . TK_LPAREN TK_REQANY objectList TK_RPAREN
+    (18) requireAll -> . TK_LPAREN TK_REQALL objectList TK_RPAREN
+    (19) requireAll -> . reqEnt objectList TK_RPAREN
+    (20) requireAll -> . reqEnt TK_RPAREN
+    (21) reqEnt -> . TK_LPAREN TK_REQENT TK_FILTER
+
+    TK_LPAREN       shift and go to state 21
+
+    objectList                     shift and go to state 51
+    requireAny                     shift and go to state 24
+    requireAll                     shift and go to state 25
+    reqEnt                         shift and go to state 26
+
+state 29
+
+    (18) requireAll -> TK_LPAREN TK_REQALL . objectList TK_RPAREN
+    (11) objectList -> . TK_LPAREN object TK_RPAREN objectList
+    (12) objectList -> . TK_LPAREN object TK_RPAREN
+    (13) objectList -> . requireAny objectList
+    (14) objectList -> . requireAll objectList
+    (15) objectList -> . requireAny
+    (16) objectList -> . requireAll
+    (17) requireAny -> . TK_LPAREN TK_REQANY objectList TK_RPAREN
+    (18) requireAll -> . TK_LPAREN TK_REQALL objectList TK_RPAREN
+    (19) requireAll -> . reqEnt objectList TK_RPAREN
+    (20) requireAll -> . reqEnt TK_RPAREN
+    (21) reqEnt -> . TK_LPAREN TK_REQENT TK_FILTER
+
+    TK_LPAREN       shift and go to state 21
+
+    objectList                     shift and go to state 52
+    requireAny                     shift and go to state 24
+    requireAll                     shift and go to state 25
+    reqEnt                         shift and go to state 26
+
+state 30
+
+    (21) reqEnt -> TK_LPAREN TK_REQENT . TK_FILTER
+
+    TK_FILTER       shift and go to state 53
+
+
+state 31
+
+    (22) object -> otherType . TK_FILTER
+    (24) object -> otherType . otherType
+    (25) object -> otherType . otherType TK_FILTER
+    (32) object -> otherType . TK_LPAREN otherType TK_FILTER otherType TK_RPAREN
+    (40) otherType -> . TK_OTHERTYPE
+
+    TK_FILTER       shift and go to state 55
+    TK_LPAREN       shift and go to state 56
+    TK_OTHERTYPE    shift and go to state 57
+
+    otherType                      shift and go to state 54
+
+state 32
+
+    (23) object -> regexFilter .
+
+    TK_RPAREN       reduce using rule 23 (object -> regexFilter .)
+
+
+state 33
+
+    (26) object -> subpath .
+
+    TK_RPAREN       reduce using rule 26 (object -> subpath .)
+
+
+state 34
+
+    (27) object -> prefix .
+
+    TK_RPAREN       reduce using rule 27 (object -> prefix .)
+
+
+state 35
+
+    (28) object -> filemode .
+
+    TK_RPAREN       reduce using rule 28 (object -> filemode .)
+
+
+state 36
+
+    (29) object -> TK_REQNOT . TK_LPAREN object TK_RPAREN
+    (30) object -> TK_REQNOT . TK_LPAREN simpleEntValObject TK_RPAREN
+
+    TK_LPAREN       shift and go to state 58
+
+
+state 37
+
+    (31) object -> TK_VNODETYPE . otherType
+    (40) otherType -> . TK_OTHERTYPE
+
+    TK_OTHERTYPE    shift and go to state 57
+
+    otherType                      shift and go to state 59
+
+state 38
+
+    (33) object -> TK_DEBUGMODE .
+
+    TK_RPAREN       reduce using rule 33 (object -> TK_DEBUGMODE .)
+
+
+state 39
+
+    (40) otherType -> TK_OTHERTYPE .
+    (41) regexFilter -> TK_OTHERTYPE . regexList
+    (42) regexList -> . TK_REGEXPRESSION regexList
+    (43) regexList -> . TK_REGEXPRESSION
+
+    TK_FILTER       reduce using rule 40 (otherType -> TK_OTHERTYPE .)
+    TK_LPAREN       reduce using rule 40 (otherType -> TK_OTHERTYPE .)
+    TK_OTHERTYPE    reduce using rule 40 (otherType -> TK_OTHERTYPE .)
+    TK_REGEXPRESSION shift and go to state 61
+
+    regexList                      shift and go to state 60
+
+state 40
+
+    (35) subpath -> TK_SUBPATH . TK_FILTER
+
+    TK_FILTER       shift and go to state 62
+
+
+state 41
+
+    (36) prefix -> TK_LPREFIX . TK_FILTER
+
+    TK_FILTER       shift and go to state 63
+
+
+state 42
+
+    (37) prefix -> TK_SPREFIX . TK_FILTER
+
+    TK_FILTER       shift and go to state 64
+
+
+state 43
+
+    (38) prefix -> TK_RPREFIX . TK_FILTER
+
+    TK_FILTER       shift and go to state 65
+
+
+state 44
+
+    (34) filemode -> TK_FILEMODETYPE . TK_MODENUMBER
+
+    TK_MODENUMBER   shift and go to state 66
+
+
+state 45
+
+    (8) rule -> TK_LPAREN decision action objectList TK_RPAREN .
+
+    TK_LPAREN       reduce using rule 8 (rule -> TK_LPAREN decision action objectList TK_RPAREN .)
+    $end            reduce using rule 8 (rule -> TK_LPAREN decision action objectList TK_RPAREN .)
+
+
+state 46
+
+    (13) objectList -> requireAny objectList .
+
+    TK_RPAREN       reduce using rule 13 (objectList -> requireAny objectList .)
+
+
+state 47
+
+    (14) objectList -> requireAll objectList .
+
+    TK_RPAREN       reduce using rule 14 (objectList -> requireAll objectList .)
+
+
+state 48
+
+    (19) requireAll -> reqEnt objectList . TK_RPAREN
+
+    TK_RPAREN       shift and go to state 67
+
+
+state 49
+
+    (20) requireAll -> reqEnt TK_RPAREN .
+
+    TK_LPAREN       reduce using rule 20 (requireAll -> reqEnt TK_RPAREN .)
+    TK_RPAREN       reduce using rule 20 (requireAll -> reqEnt TK_RPAREN .)
+
+
+state 50
+
+    (11) objectList -> TK_LPAREN object TK_RPAREN . objectList
+    (12) objectList -> TK_LPAREN object TK_RPAREN .
+    (11) objectList -> . TK_LPAREN object TK_RPAREN objectList
+    (12) objectList -> . TK_LPAREN object TK_RPAREN
+    (13) objectList -> . requireAny objectList
+    (14) objectList -> . requireAll objectList
+    (15) objectList -> . requireAny
+    (16) objectList -> . requireAll
+    (17) requireAny -> . TK_LPAREN TK_REQANY objectList TK_RPAREN
+    (18) requireAll -> . TK_LPAREN TK_REQALL objectList TK_RPAREN
+    (19) requireAll -> . reqEnt objectList TK_RPAREN
+    (20) requireAll -> . reqEnt TK_RPAREN
+    (21) reqEnt -> . TK_LPAREN TK_REQENT TK_FILTER
+
+    TK_RPAREN       reduce using rule 12 (objectList -> TK_LPAREN object TK_RPAREN .)
+    TK_LPAREN       shift and go to state 21
+
+    objectList                     shift and go to state 68
+    requireAny                     shift and go to state 24
+    requireAll                     shift and go to state 25
+    reqEnt                         shift and go to state 26
+
+state 51
+
+    (17) requireAny -> TK_LPAREN TK_REQANY objectList . TK_RPAREN
+
+    TK_RPAREN       shift and go to state 69
+
+
+state 52
+
+    (18) requireAll -> TK_LPAREN TK_REQALL objectList . TK_RPAREN
+
+    TK_RPAREN       shift and go to state 70
+
+
+state 53
+
+    (21) reqEnt -> TK_LPAREN TK_REQENT TK_FILTER .
+
+    TK_RPAREN       reduce using rule 21 (reqEnt -> TK_LPAREN TK_REQENT TK_FILTER .)
+    TK_LPAREN       reduce using rule 21 (reqEnt -> TK_LPAREN TK_REQENT TK_FILTER .)
+
+
+state 54
+
+    (24) object -> otherType otherType .
+    (25) object -> otherType otherType . TK_FILTER
+
+    TK_RPAREN       reduce using rule 24 (object -> otherType otherType .)
+    TK_FILTER       shift and go to state 71
+
+
+state 55
+
+    (22) object -> otherType TK_FILTER .
+
+    TK_RPAREN       reduce using rule 22 (object -> otherType TK_FILTER .)
+
+
+state 56
+
+    (32) object -> otherType TK_LPAREN . otherType TK_FILTER otherType TK_RPAREN
+    (40) otherType -> . TK_OTHERTYPE
+
+    TK_OTHERTYPE    shift and go to state 57
+
+    otherType                      shift and go to state 72
+
+state 57
+
+    (40) otherType -> TK_OTHERTYPE .
+
+    TK_FILTER       reduce using rule 40 (otherType -> TK_OTHERTYPE .)
+    TK_RPAREN       reduce using rule 40 (otherType -> TK_OTHERTYPE .)
+
+
+state 58
+
+    (29) object -> TK_REQNOT TK_LPAREN . object TK_RPAREN
+    (30) object -> TK_REQNOT TK_LPAREN . simpleEntValObject TK_RPAREN
+    (22) object -> . otherType TK_FILTER
+    (23) object -> . regexFilter
+    (24) object -> . otherType otherType
+    (25) object -> . otherType otherType TK_FILTER
+    (26) object -> . subpath
+    (27) object -> . prefix
+    (28) object -> . filemode
+    (29) object -> . TK_REQNOT TK_LPAREN object TK_RPAREN
+    (30) object -> . TK_REQNOT TK_LPAREN simpleEntValObject TK_RPAREN
+    (31) object -> . TK_VNODETYPE otherType
+    (32) object -> . otherType TK_LPAREN otherType TK_FILTER otherType TK_RPAREN
+    (33) object -> . TK_DEBUGMODE
+    (39) simpleEntValObject -> . TK_REQENT TK_FILTER
+    (40) otherType -> . TK_OTHERTYPE
+    (41) regexFilter -> . TK_OTHERTYPE regexList
+    (35) subpath -> . TK_SUBPATH TK_FILTER
+    (36) prefix -> . TK_LPREFIX TK_FILTER
+    (37) prefix -> . TK_SPREFIX TK_FILTER
+    (38) prefix -> . TK_RPREFIX TK_FILTER
+    (34) filemode -> . TK_FILEMODETYPE TK_MODENUMBER
+
+    TK_REQNOT       shift and go to state 36
+    TK_VNODETYPE    shift and go to state 37
+    TK_DEBUGMODE    shift and go to state 38
+    TK_REQENT       shift and go to state 75
+    TK_OTHERTYPE    shift and go to state 39
+    TK_SUBPATH      shift and go to state 40
+    TK_LPREFIX      shift and go to state 41
+    TK_SPREFIX      shift and go to state 42
+    TK_RPREFIX      shift and go to state 43
+    TK_FILEMODETYPE shift and go to state 44
+
+    object                         shift and go to state 73
+    simpleEntValObject             shift and go to state 74
+    otherType                      shift and go to state 31
+    regexFilter                    shift and go to state 32
+    subpath                        shift and go to state 33
+    prefix                         shift and go to state 34
+    filemode                       shift and go to state 35
+
+state 59
+
+    (31) object -> TK_VNODETYPE otherType .
+
+    TK_RPAREN       reduce using rule 31 (object -> TK_VNODETYPE otherType .)
+
+
+state 60
+
+    (41) regexFilter -> TK_OTHERTYPE regexList .
+
+    TK_RPAREN       reduce using rule 41 (regexFilter -> TK_OTHERTYPE regexList .)
+
+
+state 61
+
+    (42) regexList -> TK_REGEXPRESSION . regexList
+    (43) regexList -> TK_REGEXPRESSION .
+    (42) regexList -> . TK_REGEXPRESSION regexList
+    (43) regexList -> . TK_REGEXPRESSION
+
+    TK_RPAREN       reduce using rule 43 (regexList -> TK_REGEXPRESSION .)
+    TK_REGEXPRESSION shift and go to state 61
+
+    regexList                      shift and go to state 76
+
+state 62
+
+    (35) subpath -> TK_SUBPATH TK_FILTER .
+
+    TK_RPAREN       reduce using rule 35 (subpath -> TK_SUBPATH TK_FILTER .)
+
+
+state 63
+
+    (36) prefix -> TK_LPREFIX TK_FILTER .
+
+    TK_RPAREN       reduce using rule 36 (prefix -> TK_LPREFIX TK_FILTER .)
+
+
+state 64
+
+    (37) prefix -> TK_SPREFIX TK_FILTER .
+
+    TK_RPAREN       reduce using rule 37 (prefix -> TK_SPREFIX TK_FILTER .)
+
+
+state 65
+
+    (38) prefix -> TK_RPREFIX TK_FILTER .
+
+    TK_RPAREN       reduce using rule 38 (prefix -> TK_RPREFIX TK_FILTER .)
+
+
+state 66
+
+    (34) filemode -> TK_FILEMODETYPE TK_MODENUMBER .
+
+    TK_RPAREN       reduce using rule 34 (filemode -> TK_FILEMODETYPE TK_MODENUMBER .)
+
+
+state 67
+
+    (19) requireAll -> reqEnt objectList TK_RPAREN .
+
+    TK_LPAREN       reduce using rule 19 (requireAll -> reqEnt objectList TK_RPAREN .)
+    TK_RPAREN       reduce using rule 19 (requireAll -> reqEnt objectList TK_RPAREN .)
+
+
+state 68
+
+    (11) objectList -> TK_LPAREN object TK_RPAREN objectList .
+
+    TK_RPAREN       reduce using rule 11 (objectList -> TK_LPAREN object TK_RPAREN objectList .)
+
+
+state 69
+
+    (17) requireAny -> TK_LPAREN TK_REQANY objectList TK_RPAREN .
+
+    TK_LPAREN       reduce using rule 17 (requireAny -> TK_LPAREN TK_REQANY objectList TK_RPAREN .)
+    TK_RPAREN       reduce using rule 17 (requireAny -> TK_LPAREN TK_REQANY objectList TK_RPAREN .)
+
+
+state 70
+
+    (18) requireAll -> TK_LPAREN TK_REQALL objectList TK_RPAREN .
+
+    TK_LPAREN       reduce using rule 18 (requireAll -> TK_LPAREN TK_REQALL objectList TK_RPAREN .)
+    TK_RPAREN       reduce using rule 18 (requireAll -> TK_LPAREN TK_REQALL objectList TK_RPAREN .)
+
+
+state 71
+
+    (25) object -> otherType otherType TK_FILTER .
+
+    TK_RPAREN       reduce using rule 25 (object -> otherType otherType TK_FILTER .)
+
+
+state 72
+
+    (32) object -> otherType TK_LPAREN otherType . TK_FILTER otherType TK_RPAREN
+
+    TK_FILTER       shift and go to state 77
+
+
+state 73
+
+    (29) object -> TK_REQNOT TK_LPAREN object . TK_RPAREN
+
+    TK_RPAREN       shift and go to state 78
+
+
+state 74
+
+    (30) object -> TK_REQNOT TK_LPAREN simpleEntValObject . TK_RPAREN
+
+    TK_RPAREN       shift and go to state 79
+
+
+state 75
+
+    (39) simpleEntValObject -> TK_REQENT . TK_FILTER
+
+    TK_FILTER       shift and go to state 80
+
+
+state 76
+
+    (42) regexList -> TK_REGEXPRESSION regexList .
+
+    TK_RPAREN       reduce using rule 42 (regexList -> TK_REGEXPRESSION regexList .)
+
+
+state 77
+
+    (32) object -> otherType TK_LPAREN otherType TK_FILTER . otherType TK_RPAREN
+    (40) otherType -> . TK_OTHERTYPE
+
+    TK_OTHERTYPE    shift and go to state 57
+
+    otherType                      shift and go to state 81
+
+state 78
+
+    (29) object -> TK_REQNOT TK_LPAREN object TK_RPAREN .
+
+    TK_RPAREN       reduce using rule 29 (object -> TK_REQNOT TK_LPAREN object TK_RPAREN .)
+
+
+state 79
+
+    (30) object -> TK_REQNOT TK_LPAREN simpleEntValObject TK_RPAREN .
+
+    TK_RPAREN       reduce using rule 30 (object -> TK_REQNOT TK_LPAREN simpleEntValObject TK_RPAREN .)
+
+
+state 80
+
+    (39) simpleEntValObject -> TK_REQENT TK_FILTER .
+
+    TK_RPAREN       reduce using rule 39 (simpleEntValObject -> TK_REQENT TK_FILTER .)
+
+
+state 81
+
+    (32) object -> otherType TK_LPAREN otherType TK_FILTER otherType . TK_RPAREN
+
+    TK_RPAREN       shift and go to state 82
+
+
+state 82
+
+    (32) object -> otherType TK_LPAREN otherType TK_FILTER otherType TK_RPAREN .
+
+    TK_RPAREN       reduce using rule 32 (object -> otherType TK_LPAREN otherType TK_FILTER otherType TK_RPAREN .)
+
