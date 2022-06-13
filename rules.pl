@@ -103,7 +103,7 @@ query3:-
     write(Stream,R1), write(Stream,","),
     write(Stream,L1), write(Stream,","),
     write(Stream,W1), write(Stream,","),
-    write(Stream,L2),  nl(Stream),
+    write(Stream,L2), nl(Stream),
     close(Stream),
   fail.
 
