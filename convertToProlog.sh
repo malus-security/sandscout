@@ -4,7 +4,7 @@ if test $# -ne 1; then
     echo "Usage: $0 <sb_file>" 1>&2
     echo "" 1>&2
     echo "Sample usage:" 1>&2
-    echo "  $0 test_cases/containerManualPruning.sb" 1>&2
+    echo "  $0 test-cases/containerBetterGraphProcess.sb" 1>&2
     exit 1
 fi
 
