@@ -2,9 +2,7 @@
 
 import ply.lex as lex
 import ply.yacc as yacc
-import os
 import sys
-import fileinput
 import re
 
 
@@ -22,6 +20,7 @@ reserved = {
         'require-any' : 'TK_REQANY',
         'require-not' : 'TK_REQNOT',
         'vnode-type' : 'TK_VNODETYPE',
+        'file-mode': 'TK_FILEMODETYPE', #Fix for the # in files
         'debug-mode' : 'TK_DEBUGMODE',
         'require-entitlement' : 'TK_REQENT'}
 
@@ -33,6 +32,7 @@ tokens = [
         'TK_OTHERTYPE',
         'TK_BOOL',
         'TK_REGEXPRESSION',
+        'TK_HASH' #Fix for the # in files
         ] + list(reserved.values())
 
 # Regular expression rules for simple tokens
@@ -59,6 +59,13 @@ def t_TK_REGEXPRESSION(t):
 
 def t_TK_BOOL(t):
     r'\#[tf]'
+    t.value = str(t.value)
+    return t
+
+#Fix for the # in files
+def t_TK_HASH(t):
+    r'\#[a-z][0-9][0-9][0-9][0-9]'
+    r'\#[a-z]'
     t.value = str(t.value)
     return t
 
@@ -254,6 +261,7 @@ def p_object(p):
               | otherType otherType
               | otherType otherType TK_FILTER
               | subpath
+              | filemode
               | TK_REQNOT TK_LPAREN object TK_RPAREN
               | TK_REQNOT TK_LPAREN simpleEntValObject TK_RPAREN
               | TK_VNODETYPE otherType
@@ -283,6 +291,10 @@ def p_object(p):
         temp = '"'+p[3]+'"'
         p[3] = temp
         p[0] = p[1] +"("+  p[3] +","+ p[4] +","+ p[5] +")"
+
+def p_filemode(p): #Fix for the # in files
+    'filemode : TK_FILEMODETYPE TK_HASH' 
+    p[0] = p[1] + "(\"" + p[2] + "\")"
 
 def p_subpath(p):
     'subpath : TK_SUBPATH TK_FILTER'
